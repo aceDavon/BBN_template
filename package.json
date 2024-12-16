@@ -13,6 +13,9 @@
     "pg-hstore": "^2.3.4",
     "uuid": "^11.0.3"
   },
+  "scripts": {
+    "dev": "nodemon index.ts"
+  },
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",
     "@types/cors": "^2.8.17",
