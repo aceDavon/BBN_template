@@ -1,7 +1,7 @@
 {
   "name": "b_back_node_project",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "index.ts",
   "license": "MIT",
   "dependencies": {
     "bcrypt": "^5.1.1",
