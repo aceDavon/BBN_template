@@ -11,6 +11,6 @@
       "*": ["*"]
     }
   },
-  "include": ["src/**/*", "index.ts"],
+  "include": ["src/**/*", "scripts/**/*", "index.ts", "scripts"],
   "exclude": ["node_modules", "build"]
 }
