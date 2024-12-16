@@ -12,12 +12,10 @@ const generateMigration = (modelName: string): void => {
   const timestamp = new Date().toISOString().replace(/[-T:.Z]/g, "")
   const fileName = `${timestamp}_create_${modelName.toLowerCase()}.ts`
 
-  const migrationTemplate = `import { Pool } from 'pg';
-
-const pool = new Pool();
+  const migrationTemplate = `import db from 'database/db';
 
 export const up = async (): Promise<void> => {
-  await pool.query(\`
+  await db.query(\`
     CREATE TABLE ${modelName.toLowerCase()} (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       created_at TIMESTAMP DEFAULT NOW(),
@@ -27,7 +25,7 @@ export const up = async (): Promise<void> => {
 };
 
 export const down = async (): Promise<void> => {
-  await pool.query(\`
+  await db.query(\`
     DROP TABLE ${modelName.toLowerCase()};
   \`);
 };

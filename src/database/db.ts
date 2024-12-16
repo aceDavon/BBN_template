@@ -1,3 +1,6 @@
+import dotenv from "dotenv"
+dotenv.config()
+
 import { Pool } from "pg"
 
 class Database {
@@ -74,7 +77,7 @@ class Database {
     }
 
     // for (const [relation, joinCondition] of Object.entries(relations)) {
-      // Add JOIN conditions dynamically if needed
+    // Add JOIN conditions dynamically if needed
     // }
 
     const queryText = `
