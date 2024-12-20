@@ -43,6 +43,15 @@ class ChatUser {
     const user = this.room.getMember(name as string) as ChatUser
     user.send(JSON.stringify({ message, type, name }))
   }
+
+  handleMessage(data: string) {
+    const { type } = JSON.parse(data) as IChat
+
+    if (type === "join") this.handleJoin(data)
+    else if (type === "chat") this.handleChat(data)
+    else if (type === "privatechat") this.handlePrivateChat(data)
+    else throw new Error(`Invalid chat type: ${type}`) 
+  }
 }
 
 export default ChatUser
