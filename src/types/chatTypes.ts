@@ -1,0 +1,1 @@
+export type IChat = { type: string; message: string; name?: string }

@@ -1,3 +1,4 @@
+import { IChat } from "types/chatTypes"
 import ChatUser from "./chatUser"
 
 const rooms = new Map<string, ChatRoom>()
@@ -27,7 +28,7 @@ class ChatRoom {
     this.members.delete(chatUser)
   }
 
-  broadcast(data: { type: string; message: string }) {
+  broadcast(data: IChat) {
     for (const member of this.members) {
       member.send(JSON.stringify(data))
     }
