@@ -1,1 +1,1 @@
-export type IChat = { type: string; message: string; name?: string }
+export type IChat = { type: string; text: string; name?: string }

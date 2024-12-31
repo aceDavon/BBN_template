@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>GroupChat</title>
+  </head>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font: 13px Helvetica, Arial;
+    }
+
+    form {
+      background: black;
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+    }
+
+    form input {
+      padding: 10px;
+      width: 85%;
+      margin: 2px 0;
+    }
+
+    form button {
+      float: right;
+      background-color: tomato;
+      border: none;
+      border-radius: 5px;
+      padding: 1em 0;
+      width: 14%;
+      margin: 3px 0;
+    }
+
+    #messages {
+      list-style-type: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    #messages li {
+      padding: 5px 10px;
+    }
+
+    #messages li:nth-child(odd) {
+      background: #eee;
+    }
+  </style>
+
+  <body>
+    <ul id="messages"></ul>
+
+    <form id="msg-form">
+      <input id="messageInput" autocomplete="off" />
+      <button>Send</button>
+    </form>
+
+    <script src="https://unpkg.com/jquery"></script>
+    <script>
+      // CLIENT SIDE JS CODE!!!
+
+      // Open websocket connection from the browser to the server
+      const urlParts = document.URL.split("/")
+      const roomName = urlParts.at(-1)
+      const socket = new WebSocket(`ws://localhost:5500/chat/msg/${roomName}`)
+      const username = prompt("Enter your username.  (no spaces)")
+
+      socket.onopen = (evt) => {
+        console.log("WEB SOCKET OPENED!!!")
+        const data = { type: "join", name: username }
+        socket.send(JSON.stringify(data))
+      }
+
+      socket.onmessage = (evt) => {
+        console.log("NEW MESSAGE", evt)
+        let msg = JSON.parse(evt.data)
+        if (msg.type === "note") {
+          const item = document.createElement("li")
+          const text = document.createElement("i")
+          text.textContent = msg.text
+          item.appendChild(text)
+          document.querySelector("#messages").appendChild(item)
+        } else if (msg.type === "chat") {
+          const item = document.createElement("li")
+          item.innerHTML = `<b>${msg.name}:</b> ${msg.text}`
+          document.querySelector("#messages").appendChild(item)
+        }
+      }
+
+      socket.onerror = (evt) => {
+        console.log("SOMETHING WENT WRONG!")
+        console.log(evt)
+      }
+
+      socket.onclose = (evt) => {
+        console.log("WEB SOCKET HAS BEEN CLOSED!!!!")
+      }
+
+      document.querySelector("#msg-form").addEventListener("submit", (evt) => {
+        const input = document.querySelector("#messageInput")
+        evt.preventDefault()
+        const payload = JSON.stringify({ type: "chat", text: input.value })
+        socket.send(payload)
+        input.value = ""
+      })
+
+      // Do stuff eventually
+    </script>
+  </body>
+</html>

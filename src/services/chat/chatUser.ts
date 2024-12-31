@@ -2,16 +2,13 @@ import { IChat } from "types/chatTypes"
 import ChatRoom from "./chatRoom"
 
 class ChatUser {
+  private room: ChatRoom
   private _send
   name: string | null
 
-  constructor(
-    send: (data: string) => void,
-    public roomName: string,
-    private room: ChatRoom
-  ) {
+  constructor(send: (data: string) => void, public roomName: string) {
     this._send = send
-    this.room = room
+    this.room = ChatRoom.get(roomName) as ChatRoom
     this.name = null
   }
 
@@ -24,33 +21,33 @@ class ChatUser {
     this.room.join(this)
     this.room.broadcast({
       type: "note",
-      message: `${chatUser} joined ${this.room.name}`,
+      text: `${chatUser} joined ${this.room.name}`,
     })
   }
 
   handleChat(data: string) {
-    const { message, type, name } = JSON.parse(data) as IChat
+    const { text, type } = JSON.parse(data) as IChat
     this.room.broadcast({
-      message,
+      text,
       type,
-      name,
+      name: this.name as string
     })
   }
 
   handlePrivateChat(data: string) {
-    const { message, type, name } = JSON.parse(data) as IChat
+    const { text, type } = JSON.parse(data) as IChat
 
-    const user = this.room.getMember(name as string) as ChatUser
-    user.send(JSON.stringify({ message, type, name }))
+    const user = this.room.getMember(this.name as string) as ChatUser
+    user.send(JSON.stringify({ text, type, name }))
   }
 
   handleMessage(data: string) {
-    const { type } = JSON.parse(data) as IChat
+    const { type, name } = JSON.parse(data) as IChat
 
-    if (type === "join") this.handleJoin(data)
+    if (type === "join") this.handleJoin(name as string)
     else if (type === "chat") this.handleChat(data)
     else if (type === "privatechat") this.handlePrivateChat(data)
-    else throw new Error(`Invalid chat type: ${type}`) 
+    else throw new Error(`Invalid chat type: ${type}`)
   }
 }
 
