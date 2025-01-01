@@ -1,4 +1,4 @@
-import { IChat } from "types/chatTypes"
+import { IChat } from "src/types/chatTypes"
 import ChatRoom from "./chatRoom"
 
 class ChatUser {

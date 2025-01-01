@@ -1,4 +1,4 @@
-import db from "database/db"
+import db from "../src/database/db"
 import {
   MigrationHistory,
   MigrationLock,

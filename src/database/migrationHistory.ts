@@ -1,4 +1,4 @@
-import db from "database/db"
+import db from "./db"
 
 export interface MigrationRecord {
   id: string
