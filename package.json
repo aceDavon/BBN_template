@@ -18,7 +18,8 @@
     "dev": "nodemon -r tsconfig-paths/register index.ts",
     "generate-migration": "ts-node scripts/generateMigration.ts",
     "migrate:up": "ts-node scripts/runMigrations.ts up",
-    "migrate:down": "ts-node scripts/runMigrations.ts down"
+    "migrate:down": "ts-node scripts/runMigrations.ts down",
+    "migration-status": "ts-node scripts/migrationStatus.ts"
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",

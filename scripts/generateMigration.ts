@@ -14,14 +14,13 @@ const generateMigration = (modelName: string): void => {
 
   const migrationTemplate = `import db from 'database/db';
 
-export const up = async (): Promise<void> => {
-  await db.query(\`
+export const up = async (client: PoolClient): Promise<void> => {
+  await client.query(\`
     CREATE TABLE ${modelName.toLowerCase()} (
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       created_at TIMESTAMP DEFAULT NOW(),
       updated_at TIMESTAMP DEFAULT NOW()
-    );
-  \`);
+    \`);
 };
 
 export const down = async (): Promise<void> => {
