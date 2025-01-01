@@ -24,18 +24,24 @@ class Database {
     return Database.instance
   }
 
-  public async query(queryText: string, params: any[] = []): Promise<any> {
+  async query<T>(
+    text: string,
+    params?: any[]
+  ): Promise<{ rows: T[]; rowCount: number | null }> {
     const client = await this.pool.connect()
     try {
-      const result = await client.query(queryText, params)
-      return result.rows
+      const result = await client.query(text, params)
+      return { rows: result.rows as T[], rowCount: result.rowCount }
+    } catch (err) {
+      console.error(err)
+      throw err
     } finally {
       client.release()
     }
   }
 
-  public async findAll(tableName: string): Promise<any[]> {
-    return this.query(`SELECT * FROM ${tableName}`)
+  public async findAll(tableName: string) {
+    return (await this.query(`SELECT * FROM ${tableName}`)).rows
   }
 
   public async findOne(
@@ -48,7 +54,7 @@ class Database {
       .map((key, i) => `${key} = $${i + 1}`)
       .join(" AND ")} LIMIT 1`
     const results = await this.query(queryText, values)
-    return results.length > 0 ? results[0] : null
+    return results.rowCount && results.rowCount > 0 ? results.rows[0] : null
   }
 
   public async findOrFail(
@@ -64,7 +70,7 @@ class Database {
     tableName: string,
     filters: Record<string, any>,
     relations: Record<string, string> = {}
-  ): Promise<any[]> {
+  ) {
     const conditions = []
     const params: any[] = []
     let paramIndex = 1
