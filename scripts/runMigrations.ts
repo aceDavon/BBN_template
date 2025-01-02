@@ -54,6 +54,7 @@ const runMigrations = async (
     if (!options.dryRun) {
       const lockAcquired = await migrationHistory.acquireLock()
       if (!lockAcquired) {
+        console.log(options)
         throw new Error("Migrations are currently being run by another process")
       }
     }

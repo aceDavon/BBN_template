@@ -13,7 +13,7 @@ const generateMigration = (modelName: string): void => {
   const fileName = `${timestamp}_create_${modelName.toLowerCase()}.ts`
 
   const migrationTemplate = `
-import db from 'src/database/db';
+import db from "../database/db";
 import { PoolClient } from 'pg';
 
 export const up = async (client: PoolClient): Promise<void> => {
