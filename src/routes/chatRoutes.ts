@@ -1,7 +1,7 @@
 import path from "path"
 import express from "express"
 import expressWs from "express-ws"
-import ChatUser from "src/services/chat/chatUser"
+import ChatUser from "src/app/features/chat/chatUser"
 
 const router = express.Router()
 expressWs(express()).applyTo(router)
