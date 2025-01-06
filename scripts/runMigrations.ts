@@ -1,8 +1,8 @@
 import fs from "fs"
 import path from "path"
 import crypto from "crypto"
-import db from "../src/database/db"
 import { MigrationHistory } from "../src/database/migrationHistory"
+import { db } from "../src/database/db"
 
 interface PostgresError extends Error {
   code?: string
@@ -54,7 +54,6 @@ const runMigrations = async (
     if (!options.dryRun) {
       const lockAcquired = await migrationHistory.acquireLock()
       if (!lockAcquired) {
-        console.log(options)
         throw new Error("Migrations are currently being run by another process")
       }
     }
