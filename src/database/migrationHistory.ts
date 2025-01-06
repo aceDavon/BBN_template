@@ -1,4 +1,5 @@
-import db from "./db"
+import { QueryResult } from "node_modules/@types/pg"
+import { db } from "./db"
 
 export interface MigrationRecord {
   id: string
@@ -73,7 +74,7 @@ export class MigrationHistory {
     try {
       await db.query("BEGIN")
 
-      const result = await db.query<MigrationLock>(
+      const result = await db.query(
         `
         UPDATE migration_locks 
         SET is_locked = true, 
@@ -82,10 +83,15 @@ export class MigrationHistory {
         WHERE id = 1 AND is_locked = false
         RETURNING *
       `,
-        [process.env.USER || "system"]
+        [process.env.DB_USER || "root"]
       )
-
+      
       await db.query("COMMIT")
+      if (!result.rows || result.length === 0) {
+        throw new Error(
+          "Failed to acquire lock: Lock is already held by another process."
+        )
+      }
       return result.rows.length > 0
     } catch (error) {
       await db.query("ROLLBACK")
@@ -130,26 +136,26 @@ export class MigrationHistory {
   }
 
   async getLatestBatch(): Promise<number> {
-    const result = await db.query<LatestBatchResult>(`
+    const result = await db.query<QueryResult<LatestBatchResult>>(`
       SELECT COALESCE(MAX(batch), 0) as latest_batch
       FROM migration_history
       WHERE status = 'up'
     `)
-    return result.rows[0].latest_batch
+    return result.rows.length > 0 ? result.rows[0].latest_batch : 0
   }
 
   async getExecutedMigrations(): Promise<string[]> {
-    const result = await db.query<MigrationName>(`
+    const result = await db.query<QueryResult<MigrationName>>(`
       SELECT name
       FROM migration_history
       WHERE status = 'up'
       ORDER BY timestamp ASC
     `)
-    return result.rows.map((row) => row.name)
+    return result.rows ? result.rows.map((row) => row.name) : []
   }
 
   async getMigrationsInBatch(batch: number): Promise<string[]> {
-    const result = await db.query<MigrationName>(
+    const result = await db.query<QueryResult<MigrationName>>(
       `
       SELECT name
       FROM migration_history
@@ -158,11 +164,11 @@ export class MigrationHistory {
     `,
       [batch]
     )
-    return result.rows.map((row) => row.name)
+    return result.rows ? result.rows.map((row) => row.name) : []
   }
 
   async validateMigration(name: string, checksum: string): Promise<boolean> {
-    const result = await db.query<Pick<MigrationRecord, "checksum">>(
+    const result = await db.query<QueryResult>(
       `
       SELECT checksum
       FROM migration_history
@@ -172,12 +178,23 @@ export class MigrationHistory {
     `,
       [name]
     )
+    if (!result.rows || result.rows.length === 0) {
+      return true
+    }
 
-    return result.rows.length === 0 || result.rows[0].checksum === checksum
+    if (result.rows.length === 0) {
+      return true
+    }
+
+    if (!checksum || !result.rows[0].checksum) {
+      return true
+    }
+
+    return result.rows[0].checksum === checksum
   }
 
   async getDetailedStatus(): Promise<DetailedMigrationStatus[]> {
-    const result = await db.query<DetailedMigrationStatus>(`
+    const result = await db.query<QueryResult<DetailedMigrationStatus>>(`
       WITH ranked_migrations AS (
         SELECT 
           name,
