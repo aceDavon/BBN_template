@@ -1,6 +1,6 @@
 ## NodeJS Boilerplate application with Authentication.
 
-This application is a boilerplate Node.js backend built with TypeScript. It includes user authentication using HTTP-only cookies, database operations with PostgreSQL, and a migration system for managing database schema changes.
+This application is a Node.js boilerplate backend built with TypeScript. It supports user authentication via HTTP-only cookies, dynamic database operations with PostgreSQL, a migration system, and a service container for managing dependencies.
 
 
 ## Features
@@ -13,11 +13,11 @@ This application is a boilerplate Node.js backend built with TypeScript. It incl
 
   - Middleware for protecting routes using session cookies.
 
-  **2. Database Integration**
+  **2. Dynamic Database Integration**
 
-  - Singleton database class for PostgreSQL with helper methods (query, findAll, findOne, findOrFail, etc.).
-
-  - Support for dynamic query building to filter models based on parameters like dates, usernames, or relationships.
+  - Singleton database class with helper methods (`query`, `findAll`, `findOne`, `findOrFail`).
+  - Dynamic query builder for filtering models (date ranges, usernames, relationships, etc.).
+  - Abstracted dynamic database initialization via a service container.
 
   **3. Migration System**
 
@@ -27,15 +27,23 @@ This application is a boilerplate Node.js backend built with TypeScript. It incl
 
   - Uses the database singleton for migration queries.
 
-  **4. Folder Structure**
+  **4. Service Container**
 
-  - Organized into controllers, services, and repositories for scalability and separation of concerns.
+  - Centralized dependency management with support for singleton or non-singleton services.
+  - Simplifies dependency resolution and promotes modular design.
+  **5. Folder Structure**
 
-  **5. Environment Configuration**
+  - Features encapsulated under `app/features`.
+  - Centralized utilities in src/app/utils (e.g., service container).
+  - Modular organization for scalability.
+
+  **6. Environment Configuration**
 
   - .env file support for managing sensitive configuration like database connection strings and JWT secrets.
+  - Docker for containerized environments.
+  - Kubernetes support for production deployment.
 
-  **6. Package Management**
+  **7. Package Management**
 
   - Uses Yarn for dependency management.
 
@@ -90,18 +98,20 @@ This application is a boilerplate Node.js backend built with TypeScript. It incl
 ```
 project-root/
 ├── src/
-│   ├── controllers/        # Handles HTTP requests
-│   ├── services/           # Business logic
+│   ├── app/
+│   │   └── features/       # Feature modules
+│   │   └── utils/          # Utility modules(e.g., service container)
+│   ├── controllers/        # Request handlers
 │   ├── repositories/       # Data access logic
 │   ├── database/           # Singleton database instance
+│   │   └── db.ts           # Dynamic database logic
 │   ├── middlewares/        # Express middleware
 │   ├── migrations/         # Database migrations
-│   ├── routes/             # API route definitions
+│   ├── routes/             # API routes
 │   └── utils/              # Utility functions
-├── scripts/                # Helper scripts (e.g., migrations)
+├── scripts/                # Migration scripts
 ├── .env                    # Environment variables
 ├── tsconfig.json           # TypeScript configuration
-├── package.json            # Project metadata and scripts
 └── README.md               # Documentation
 ```
 
@@ -224,6 +234,56 @@ project-root/
     ```
 
   - **Description:** Reverts all applied migrations.
+
+## Dynamic Database Management
+**Helper Methods**
+
+1. `query`: Execute raw SQL queries.
+
+    ```typescript
+    await db.query('SELECT * FROM users');
+    ```
+2. `findAll`: Retrieve all records.
+
+    ```typescript
+    const users = await db.findAll('users');
+    ```
+3. `findOne`: Retrieve a single record by criteria.
+    ```typescript
+    const user = await db.findOne('users', { email: 'example@example.com' });
+    ```
+4. `findOrFail`: Retrieve a record or throw an error.
+
+    ```typescript
+    const user = await db.findOrFail('users', { id: 'uuid' });
+    ```
+5. `filter`: Dynamic query builder.
+    ```typescript
+    const results = await db.filter('users', {
+      dateRange: { from: '2023-01-01', to: '2023-12-31' },
+      username: 'john_doe',
+    });
+    ```
+
+**Dynamic Database Initialization**
+
+  ```typescript
+    import { IDatabase } from 'src/types/dbInterface';
+    import PgAdapter from './adapters/pgDB';
+
+    export const getDatabase = <T>(): IDatabase<T> => {
+      const dbType = process.env.DB_TYPE;
+
+      switch (dbType) {
+        case 'postgres':
+          return PgAdapter.getInstance<T>();
+        default:
+          throw new Error(`Unsupported database type: ${dbType}`);
+      }
+    };
+
+    export const db = getDatabase<Record<string, any>>();
+  ```
 
 ## Using the Application
 
