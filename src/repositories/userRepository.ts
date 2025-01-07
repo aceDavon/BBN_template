@@ -1,4 +1,4 @@
-import db from "../database/db"
+import { db } from "src/database/db"
 import User from "../models/user"
 
 class UserRepository {
@@ -13,7 +13,8 @@ class UserRepository {
   }
 
   async findByUsername(username: string): Promise<User | null> {
-    return db.findOne(this.tableName, { username })
+    const result = await db.findOne(this.tableName, { username })
+    return result ? (result as User) : null
   }
 }
 

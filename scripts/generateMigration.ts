@@ -12,7 +12,8 @@ const generateMigration = (modelName: string): void => {
   const timestamp = new Date().toISOString().replace(/[-T:.Z]/g, "")
   const fileName = `${timestamp}_create_${modelName.toLowerCase()}.ts`
 
-  const migrationTemplate = `import db from 'database/db';
+  const migrationTemplate = `
+import { db } from "../database/db";
 
 export const up = async (): Promise<void> => {
   await db.query(\`
@@ -20,13 +21,13 @@ export const up = async (): Promise<void> => {
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       created_at TIMESTAMP DEFAULT NOW(),
       updated_at TIMESTAMP DEFAULT NOW()
-    );
-  \`);
+    )\`
+  );
 };
 
 export const down = async (): Promise<void> => {
   await db.query(\`
-    DROP TABLE ${modelName.toLowerCase()};
+    DROP TABLE IF EXISTS ${modelName.toLowerCase()};
   \`);
 };
 `
