@@ -37,6 +37,11 @@ export interface DetailedMigrationStatus extends MigrationRecord {
   avg_duration_ms: number | null
 }
 
+interface MigrationHistoryRow {
+  checksum: string
+  status: "up" | "down" | "error"
+}
+
 export class MigrationHistory {
   async initialize(): Promise<void> {
     await db.query(`
@@ -85,7 +90,7 @@ export class MigrationHistory {
       `,
         [process.env.DB_USER || "root"]
       )
-      
+
       await db.query("COMMIT")
       if (!result.rows || result.length === 0) {
         throw new Error(
@@ -109,32 +114,6 @@ export class MigrationHistory {
     `)
   }
 
-  async recordMigration(
-    name: string,
-    batch: number,
-    status: "up" | "down" | "error",
-    checksum: string,
-    durationMs: number,
-    error?: string
-  ): Promise<void> {
-    await db.query<MigrationRecord>(
-      `
-      INSERT INTO migration_history 
-      (name, batch, status, checksum, executed_by, duration_ms, error)
-      VALUES ($1, $2, $3, $4, $5, $6, $7)
-    `,
-      [
-        name,
-        batch,
-        status,
-        checksum,
-        process.env.USER || "system",
-        durationMs,
-        error,
-      ]
-    )
-  }
-
   async getLatestBatch(): Promise<number> {
     const result = await db.query<QueryResult<LatestBatchResult>>(`
       SELECT COALESCE(MAX(batch), 0) as latest_batch
@@ -142,16 +121,6 @@ export class MigrationHistory {
       WHERE status = 'up'
     `)
     return result.rows.length > 0 ? result.rows[0].latest_batch : 0
-  }
-
-  async getExecutedMigrations(): Promise<string[]> {
-    const result = await db.query<QueryResult<MigrationName>>(`
-      SELECT name
-      FROM migration_history
-      WHERE status = 'up'
-      ORDER BY timestamp ASC
-    `)
-    return result.rows ? result.rows.map((row) => row.name) : []
   }
 
   async getMigrationsInBatch(batch: number): Promise<string[]> {
@@ -168,29 +137,93 @@ export class MigrationHistory {
   }
 
   async validateMigration(name: string, checksum: string): Promise<boolean> {
-    const result = await db.query<QueryResult>(
+    const result = await db.query<MigrationHistoryRow[]>(
       `
-      SELECT checksum
-      FROM migration_history
-      WHERE name = $1 AND status = 'up'
-      ORDER BY timestamp DESC
-      LIMIT 1
-    `,
+      WITH RankedMigrations AS (
+        SELECT 
+          checksum,
+          status,
+          ROW_NUMBER() OVER (
+            PARTITION BY name 
+            ORDER BY timestamp DESC
+          ) as rn
+        FROM migration_history
+        WHERE name = $1
+      )
+      SELECT checksum, status
+      FROM RankedMigrations
+      WHERE rn = 1
+      `,
       [name]
     )
-    if (!result.rows || result.rows.length === 0) {
+
+    if (!result || result.length === 0) {
+      return true // No history found, migration can proceed
+    }
+
+    const latestRecord = result[0]
+
+    // If the latest status is 'down' or 'error', allow the migration
+    if (latestRecord.status === "down" || latestRecord.status === "error") {
       return true
     }
 
-    if (result.rows.length === 0) {
+    // For 'up' status, validate checksum if both exist
+    if (!checksum || !latestRecord.checksum) {
       return true
     }
 
-    if (!checksum || !result.rows[0].checksum) {
-      return true
-    }
+    return latestRecord.checksum === checksum
+  }
 
-    return result.rows[0].checksum === checksum
+  async getExecutedMigrations(): Promise<string[]> {
+    const result = await db.query<QueryResult<{ name: string }>>(
+      `
+      WITH LatestMigrationStatus AS (
+        SELECT 
+          name,
+          status,
+          ROW_NUMBER() OVER (
+            PARTITION BY name 
+            ORDER BY timestamp DESC
+          ) as rn
+        FROM migration_history
+      )
+      SELECT name
+      FROM LatestMigrationStatus
+      WHERE rn = 1 
+      AND status = 'up'
+      ORDER BY name ASC
+      `
+    )
+    
+    return result.rows.map((row) => row.name)
+  }
+
+  async recordMigration(
+    name: string,
+    batch: number,
+    status: "up" | "down" | "error",
+    checksum: string,
+    durationMs: number,
+    error?: string
+  ): Promise<void> {
+    await db.query<MigrationRecord>(
+      `
+      INSERT INTO migration_history 
+      (name, batch, status, checksum, executed_by, duration_ms, error)
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      `,
+      [
+        name,
+        batch,
+        status,
+        checksum,
+        process.env.USER || "system",
+        durationMs,
+        error,
+      ]
+    )
   }
 
   async getDetailedStatus(): Promise<DetailedMigrationStatus[]> {
