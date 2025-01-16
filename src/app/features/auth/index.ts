@@ -1,7 +1,7 @@
 import bcrypt from "bcrypt"
-import UserRepository from "../repositories/userRepository"
-import { generateToken } from "../utils/handlers/auth/jwtUtils"
-import User from "../models/user"
+import UserRepository from "../../../repositories/userRepository"
+import { generateToken } from "../../../utils/handlers/auth/jwtUtils"
+import User from "../../../models/user"
 
 class AuthService {
   private secretKey = process.env.JWT_SECRET || "your-secret-key"

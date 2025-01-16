@@ -1,17 +1,18 @@
-import db from "../src/database/db"
 import {
   MigrationHistory,
   MigrationLock,
 } from "../src/database/migrationHistory"
 import fs from "fs"
 import path from "path"
+import { db } from "../src/database/db"
+import { QueryResult } from "node_modules/@types/pg"
 
 async function showMigrationStatus() {
   const migrationHistory = new MigrationHistory()
   await migrationHistory.initialize()
 
   // Check if migrations are currently locked
-  const lockStatus = await db.query<MigrationLock>(
+  const lockStatus = await db.query<QueryResult<MigrationLock>>(
     "SELECT * FROM migration_locks WHERE id = 1"
   )
   if (lockStatus.rows[0].is_locked) {
