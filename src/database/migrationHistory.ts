@@ -137,7 +137,7 @@ export class MigrationHistory {
   }
 
   async validateMigration(name: string, checksum: string): Promise<boolean> {
-    const result = await db.query<MigrationHistoryRow[]>(
+    const result = await db.query<MigrationHistoryRow>(
       `
       WITH RankedMigrations AS (
         SELECT 
@@ -157,11 +157,11 @@ export class MigrationHistory {
       [name]
     )
 
-    if (!result || result.length === 0) {
+    if (!result) {
       return true // No history found, migration can proceed
     }
 
-    const latestRecord = result[0]
+    const latestRecord = result
 
     // If the latest status is 'down' or 'error', allow the migration
     if (latestRecord.status === "down" || latestRecord.status === "error") {
