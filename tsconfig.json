@@ -6,11 +6,13 @@
     "outDir": "build",
     "esModuleInterop": true,
     "strict": true,
-    "baseUrl": "./src",
+    "baseUrl": ".",
     "paths": {
-      "*": ["*"]
+      "*": ["*"],
+      "services/*": ["services/*"],
+      "scripts/*": ["scripts/*"]
     }
   },
-  "include": ["src/**/*", "index.ts"],
+  "include": ["src/**/*", "scripts/**/*", "index.ts"],
   "exclude": ["node_modules", "build"]
 }
