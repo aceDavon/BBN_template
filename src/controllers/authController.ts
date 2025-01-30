@@ -1,6 +1,17 @@
 import { CookieOptions, Request, Response } from "express"
 import AuthService from "../app/features/auth"
 import { validateArrayProperties } from "src/utils/handlers/propertyValidation"
+import User from "src/models/user"
+import { JwtPayload } from "jsonwebtoken"
+
+interface CustomJwtPayload extends JwtPayload {
+  id: string
+  username: string
+}
+
+interface AuthenticatedRequest extends Request {
+  user?: CustomJwtPayload | string
+}
 
 export const register = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -37,4 +48,48 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     const { message } = error as { message: string }
     res.status(400).json({ error: message })
   }
+}
+
+export const getUsers = async (req: Request, res: Response): Promise<void> => {
+  const users = await AuthService.getAllUsers()
+  const usersWithoutPassword = users.map(user => {
+    const { password, ...userWithoutPassword } = user
+    return userWithoutPassword
+  })
+
+  res.status(200).json({ users: usersWithoutPassword })
+}
+
+export const update = async (
+  req: AuthenticatedRequest,
+  res: Response
+): Promise<void> => {
+  try {
+    const data: Partial<User> = req.body
+    if (Object.keys(data).length === 0)
+      throw new Error("No data provided for User updates")
+
+    const fields = Object.keys(data)
+      .map((field, idx) => `${field} = $${idx + 2}`)
+      .join(", ")
+    const values = Object.values(data)
+    const { id } = req.user as CustomJwtPayload
+
+    const result = await AuthService.update(fields, values, id)
+    if (result === 0) throw new Error("Update failed, Try again")
+
+    res.status(200).json({ success: true, message: "User Update successful" })
+  } catch (error) {
+    const { message } = error as { message: string }
+    res.status(400).json({ error: message })
+  }
+}
+
+export const logout = (req: Request, res: Response): void => {
+  res.clearCookie("token", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
+  })
+  res.status(200).json({ success: true, message: "Logged out successfully" })
 }
