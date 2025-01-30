@@ -35,6 +35,10 @@ class UserRepository {
 
     return result?.rowCount ?? 0
   }
+
+  async deleteUserAccount(userId: string): Promise<boolean> {
+    return  await db.delete(`${this.tableName}`, { id: userId })
+  }
 }
 
 export default new UserRepository()

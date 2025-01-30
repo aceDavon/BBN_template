@@ -3,9 +3,10 @@ import { Router } from "express"
 import {
   login,
   register,
-  update,
+  updateUser,
   logout,
   getUsers,
+  deleteUser,
 } from "../../controllers/authController"
 import { authenticateToken } from "src/middleware/authMiddleware"
 
@@ -15,8 +16,9 @@ router.post("/login", login)
 router.post("/register", register)
 
 // Authentication routes
-router.patch("/", authenticateToken, update)
+router.patch("/", authenticateToken, updateUser)
 router.get("/", authenticateToken, getUsers)
 router.post("/logout", authenticateToken, logout)
+router.delete('/', authenticateToken, deleteUser)
 
 export default router

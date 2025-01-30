@@ -94,6 +94,8 @@ class PgAdapter<T> implements IDatabase<T> {
       .join(" AND ")
     const values = entries.map((entry) => entry[1])
 
+    console.log(entries)
+
     const result = await this.pool.query(
       `DELETE FROM ${table} WHERE ${conditions}`,
       values

@@ -51,7 +51,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 }
 
 export const getUsers = async (req: Request, res: Response): Promise<void> => {
-  const users = await AuthService.getAllUsers()
+  const users = await AuthService.users()
   const usersWithoutPassword = users.map(user => {
     const { password, ...userWithoutPassword } = user
     return userWithoutPassword
@@ -60,7 +60,7 @@ export const getUsers = async (req: Request, res: Response): Promise<void> => {
   res.status(200).json({ users: usersWithoutPassword })
 }
 
-export const update = async (
+export const updateUser = async (
   req: AuthenticatedRequest,
   res: Response
 ): Promise<void> => {
@@ -92,4 +92,19 @@ export const logout = (req: Request, res: Response): void => {
     sameSite: "strict",
   })
   res.status(200).json({ success: true, message: "Logged out successfully" })
+}
+
+export const deleteUser = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { userId } = req.query
+    
+    const result = await AuthService.delete(userId as string)
+    if (!result) throw new Error("User deletion failed, Try again")
+
+    res.status(200).json({ success: true, message: "User deleted successfully" })
+  } catch (error) {
+    const { message } = error as { message: string }
+    res.status(400).json({ error: message })
+  }
+
 }

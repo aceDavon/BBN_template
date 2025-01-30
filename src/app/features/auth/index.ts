@@ -20,7 +20,7 @@ class AuthService {
     return generateToken({ username: user.username, id: user.id }, this.secretKey)
   }
 
-  async getAllUsers(): Promise<Record<string, any>[]> {
+  async users(): Promise<Record<string, any>[]> {
     return await UserRepository.findAllUsers()
   }
 
@@ -30,6 +30,10 @@ class AuthService {
     UserId: string
   ): Promise<number> {
     return await UserRepository.updateUserAccount(fields, values, UserId)
+  }
+
+  async delete(userId: string): Promise<boolean> {
+    return UserRepository.deleteUserAccount(userId)
   }
 }
 
