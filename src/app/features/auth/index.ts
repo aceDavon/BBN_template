@@ -17,7 +17,23 @@ class AuthService {
     if (!user || !(await bcrypt.compare(password, user.password))) {
       throw new Error("Invalid credentials")
     }
-    return generateToken({ username: user.username }, this.secretKey)
+    return generateToken({ username: user.username, id: user.id }, this.secretKey)
+  }
+
+  async users(): Promise<Record<string, any>[]> {
+    return await UserRepository.findAllUsers()
+  }
+
+  async update(
+    fields: string,
+    values: string[],
+    UserId: string
+  ): Promise<number> {
+    return await UserRepository.updateUserAccount(fields, values, UserId)
+  }
+
+  async delete(userId: string): Promise<boolean> {
+    return UserRepository.deleteUserAccount(userId)
   }
 }
 

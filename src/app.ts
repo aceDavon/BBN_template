@@ -1,5 +1,6 @@
 import express from "express"
 import multer from "multer"
+import cookieParser from "cookie-parser"
 
 import chatRoutes from "./routes/chatRoutes"
 import authRoutes from "./routes/auth/authRoutes"
@@ -11,6 +12,7 @@ const upload = multer()
 app.use(upload.any())
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
+app.use(cookieParser())
 
 app.use("/chat", chatRoutes)
 app.use("/auth", authRoutes)

@@ -1,5 +1,6 @@
 import { db } from "src/database/db"
 import User from "../models/user"
+import { QueryResult } from "node_modules/@types/pg"
 
 class UserRepository {
   private tableName = "users"
@@ -15,6 +16,28 @@ class UserRepository {
   async findByUsername(username: string): Promise<User | null> {
     const result = await db.findOne(this.tableName, { username })
     return result ? (result as User) : null
+  }
+
+  async findAllUsers(): Promise<Record<string, any>[]> {
+    return await db.findAll(this.tableName)
+  }
+
+  async updateUserAccount(
+    fields: string,
+    values: string[],
+    userId: string
+  ): Promise<number> {
+    const query = `UPDATE ${this.tableName} SET ${fields} WHERE id = $1 RETURNING *`
+    const result = await db.query<QueryResult<User> | null>(query, [
+      userId,
+      ...values,
+    ])
+
+    return result?.rowCount ?? 0
+  }
+
+  async deleteUserAccount(userId: string): Promise<boolean> {
+    return  await db.delete(`${this.tableName}`, { id: userId })
   }
 }
 
