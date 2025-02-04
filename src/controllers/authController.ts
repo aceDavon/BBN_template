@@ -3,6 +3,7 @@ import AuthService from "../app/features/auth"
 import { validateArrayProperties } from "src/utils/handlers/propertyValidation"
 import User from "src/models/user"
 import { JwtPayload } from "jsonwebtoken"
+import { genericError } from "src/utils/handlers/errors/genericError"
 
 interface CustomJwtPayload extends JwtPayload {
   id: string
@@ -23,7 +24,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     res.status(201).json({ message: "User registered successfully" })
   } catch (error) {
     const { message } = error as { message: string }
-    res.status(400).json({ error: message })
+    res.status(400).json(genericError({ message }))
   }
 }
 
@@ -46,13 +47,13 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     res.status(200).json({ success: true })
   } catch (error) {
     const { message } = error as { message: string }
-    res.status(400).json({ error: message })
+    res.status(400).json(genericError({ message }))
   }
 }
 
 export const getUsers = async (req: Request, res: Response): Promise<void> => {
   const users = await AuthService.users()
-  const usersWithoutPassword = users.map(user => {
+  const usersWithoutPassword = users.map((user) => {
     const { password, ...userWithoutPassword } = user
     return userWithoutPassword
   })
@@ -81,7 +82,7 @@ export const updateUser = async (
     res.status(200).json({ success: true, message: "User Update successful" })
   } catch (error) {
     const { message } = error as { message: string }
-    res.status(400).json({ error: message })
+    res.status(400).json(genericError({ message }))
   }
 }
 
@@ -94,17 +95,21 @@ export const logout = (req: Request, res: Response): void => {
   res.status(200).json({ success: true, message: "Logged out successfully" })
 }
 
-export const deleteUser = async (req: Request, res: Response): Promise<void> => {
+export const deleteUser = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
   try {
     const { userId } = req.query
-    
+
     const result = await AuthService.delete(userId as string)
     if (!result) throw new Error("User deletion failed, Try again")
 
-    res.status(200).json({ success: true, message: "User deleted successfully" })
+    res
+      .status(200)
+      .json({ success: true, message: "User deleted successfully" })
   } catch (error) {
     const { message } = error as { message: string }
-    res.status(400).json({ error: message })
+    res.status(400).json(genericError({ message }))
   }
-
 }
